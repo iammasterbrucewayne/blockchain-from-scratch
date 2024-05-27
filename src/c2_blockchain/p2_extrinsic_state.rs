@@ -79,7 +79,6 @@ impl Header {
         } else {
             return false;
         }
-        todo!("Exercise 3")
     }
 }
 
