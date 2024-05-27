@@ -60,6 +60,25 @@ impl Header {
     /// So in order for a block to verify, we must have that relationship between the extrinsic,
     /// the previous state, and the current state.
     fn verify_sub_chain(&self, chain: &[Header]) -> bool {
+        let maybe_consistent_header: Option<&Header> =
+            chain.iter().fold(Some(self), |prev, current| match prev {
+                Some(header) => {
+                    let is_invalid = current.parent != hash(header)
+                        || current.height != header.height + 1
+                        || current.state != header.state + current.extrinsic;
+                    if is_invalid {
+                        return None;
+                    } else {
+                        return Some(current);
+                    }
+                }
+                None => return None,
+            });
+        if maybe_consistent_header.is_some() {
+            return true;
+        } else {
+            return false;
+        }
         todo!("Exercise 3")
     }
 }
