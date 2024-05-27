@@ -52,13 +52,57 @@ pub struct Atm {
     keystroke_register: Vec<Key>,
 }
 
+fn handle_key_presses(starting_state: &Atm, key: Key) -> Vec<Key> {
+    match key {
+        Key::Enter => {
+            let mut new_state = starting_state.clone();
+            let pin = new_state.keystroke_register.clone();
+            let pin_hash = pin.iter().fold(0, |acc, k| acc * 10 + k.clone() as u64);
+            match new_state.expected_pin_hash {
+                Auth::Authenticating(expected_pin_hash) => {
+                    if pin_hash == expected_pin_hash {
+                        new_state.expected_pin_hash = Auth::Authenticated;
+                    } else {
+                        new_state.expected_pin_hash = Auth::Waiting;
+                    }
+                }
+                _ => {}
+            }
+            new_state.keystroke_register = Vec::new();
+            new_state
+                .cash_inside
+                .checked_sub(pin.iter().fold(0, |acc, k| acc * 10 + k.clone() as u64))
+                .map(|new_cash| new_state.cash_inside = new_cash);
+            new_state.keystroke_register
+        }
+        Key::One | Key::Two | Key::Three | Key::Four => {
+            let mut new_state = starting_state.clone();
+            new_state.keystroke_register.push(key);
+            new_state.keystroke_register
+        }
+    }
+}
+
 impl StateMachine for Atm {
     // Notice that we are using the same type for the state as we are using for the machine this time.
     type State = Self;
     type Transition = Action;
 
     fn next_state(starting_state: &Self::State, t: &Self::Transition) -> Self::State {
-        todo!("Exercise 4")
+        match t {
+            Action::SwipeCard(pin_hash) => Atm {
+                // todo
+                cash_inside: starting_state.cash_inside,
+                expected_pin_hash: Auth::Authenticating(*pin_hash),
+                keystroke_register: Vec::new(),
+            },
+            Action::PressKey(key) => Atm {
+                // todo
+                cash_inside: starting_state.cash_inside,
+                expected_pin_hash: starting_state.expected_pin_hash.clone(),
+                keystroke_register: handle_key_presses(starting_state, key.clone()),
+            },
+        }
     }
 }
 
