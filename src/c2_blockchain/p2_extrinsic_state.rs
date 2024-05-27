@@ -107,7 +107,18 @@ fn build_valid_chain(n: u64) -> Vec<Header> {
 /// For this function, ONLY USE the the `genesis()` and `child()` methods to create blocks.
 /// The exercise is still possible.
 fn build_an_invalid_chain() -> Vec<Header> {
-    todo!("Exercise 5")
+    let mut chain = Vec::new();
+    let mut current = Header::genesis();
+    chain.push(current.clone());
+    let mut first_invalid = chain.last().unwrap().child(7).clone();
+    first_invalid.height = 10;
+    for i in 0..3 {
+        current = current.child(i);
+        chain.push(current.clone());
+    }
+    // chain[1].parent = 0;
+    chain.push(first_invalid);
+    chain
 }
 
 /// Build and return two header chains.
