@@ -32,7 +32,7 @@ impl Header {
     /// Returns a new valid genesis header.
     fn genesis() -> Self {
         Self {
-            parent: hash(&0),
+            parent: 0,
             height: 0,
             extrinsic: 0,
             state: 0,
@@ -86,7 +86,14 @@ impl Header {
 
 /// Build and return a valid chain with the given number of blocks.
 fn build_valid_chain(n: u64) -> Vec<Header> {
-    todo!("Exercise 4")
+    let mut chain = Vec::new();
+    let mut current = Header::genesis();
+    chain.push(current.clone());
+    for i in 0..n - 1 {
+        current = current.child(i);
+        chain.push(current.clone());
+    }
+    chain
 }
 
 /// Build and return a chain with at least three headers.
