@@ -50,7 +50,25 @@ impl Header {
     /// This method may assume that the block on which it is called is valid, but it
     /// must verify all of the blocks in the slice;
     fn verify_sub_chain(&self, chain: &[Header]) -> bool {
-        todo!("Exercise 3")
+        let maybe_consistent_header: Option<&Header> =
+            chain.iter().fold(Some(self), |prev, current| {
+                if prev.is_some() {
+                    if current.parent != hash(prev.unwrap())
+                        || current.height != prev.unwrap().height + 1
+                    {
+                        return None;
+                    } else {
+                        return Some(current);
+                    }
+                } else {
+                    return None;
+                }
+            });
+        if maybe_consistent_header.is_some() {
+            return true;
+        } else {
+            return false;
+        }
     }
 }
 
