@@ -103,19 +103,28 @@ impl StateMachine for DigitalCashSystem {
                     serial: starting_state.next_serial(),
                 };
                 current_state.add_bill(bill);
-            },
+            }
             Self::Transition::Transfer { spends, receives } => {
-                let mut new_bills = HashSet::<Bill>::new();
+                let mut bills_to_burn = HashSet::<Bill>::new();
+                let total_received: Option<u64> = receives.iter().fold(Some(0), |acc, bill| acc.unwrap().checked_add(bill.amount));
+                if total_received.is_none() {
+                    return current_state;
+                }
                 spends.iter().for_each(|bill| {
-                    if !current_state.bills.contains(bill) {
+                    if !current_state.bills.contains(bill)
+                        || bill.amount < total_received.unwrap()
+                        || bill.amount == 0
+                        || receives.iter().any(|b| b.serial == bill.serial)
+                        || receives.iter().any(|b| b.amount == 0)
+                        || receives.iter().any(|b| b.owner == bill.owner)
+                    {
                         return;
                     }
-                    if bill.amount < receives.iter().map(|b| b.amount).sum() {
-                        return;
-                    }
-                    new_bills.insert(bill.clone());
+                    bills_to_burn.insert(bill.clone());
                 });
-                current_state.bills.retain(|bill| !new_bills.contains(bill));
+                current_state
+                    .bills
+                    .retain(|bill| !bills_to_burn.contains(bill));
             }
         }
         current_state
